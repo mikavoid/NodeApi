@@ -1,4 +1,5 @@
 const bodyParser = require('body-parser')
+const _ = require('underscore')
 const express = require('express')
 const app = express()
 
@@ -18,28 +19,33 @@ app.get('/todos', (req, res) => {
 })
 
 app.get('/todos/:id', (req, res) => {
-    const id = req.params.id
-    todos.map((todo) => {
-        if (todo.id == id) {
-            res.status(200).json({data: todo})
-        }
-    })
+    const id = parseInt(req.params.id, 10)
+
+    var todo = _.findWhere(todos, {id})
+    if (todo) {
+        res.status(200).json({data: todo})
+    }
     res.status(404).json({data: {error : 'Todo not found'}})
 })
 
 app.post('/todos', (req, res) => {
-    
+
     const body = req.body
     
-    let todo = {
-        description: body.description,
-        completed: body.completed,
-        id: todoNextId,
+    // Validation
+    if (!_.isString(body.description) 
+            || !_.isBoolean(body.completed) 
+            || body.description.trim().length === 0) {
+        res.status(404).send()
     }
+    
+    body.description = body.description.trim()
+    
+    let todo = _.pick(body, 'description', 'completed')
+    todo.id = todoNextId
     
     todos.push(todo)
     todoNextId++
-    console.log(todos)
     res.status(200).send()
 })
 
