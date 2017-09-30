@@ -1,25 +1,13 @@
+const bodyParser = require('body-parser')
 const express = require('express')
 const app = express()
 
 const PORT = process.env.PORT || 3000
 
-let todos = [
-    {
-        id: 1,
-        description: 'Meet mom for lunch',
-        completed: false
-    },
-    {
-        id: 2,
-        description: 'Go to market',
-        completed: false
-    },
-    {
-        id: 3,
-        description: 'Feed the cat',
-        completed: true
-    }
-]
+let todos = []
+let todoNextId = 1
+
+app.use(bodyParser.json())
 
 app.get('/', (req, res) => {
     res.status(200).json({data: 'Todo API root'})
@@ -37,6 +25,22 @@ app.get('/todos/:id', (req, res) => {
         }
     })
     res.status(404).json({data: {error : 'Todo not found'}})
+})
+
+app.post('/todos', (req, res) => {
+    
+    const body = req.body
+    
+    let todo = {
+        description: body.description,
+        completed: body.completed,
+        id: todoNextId,
+    }
+    
+    todos.push(todo)
+    todoNextId++
+    console.log(todos)
+    res.status(200).send()
 })
 
 
