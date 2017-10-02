@@ -15,7 +15,24 @@ app.get('/', (req, res) => {
 })
 
 app.get('/todos', (req, res) => {
-    res.status(200).json({data: todos})
+    const queryParams = req.query
+    let filteredTodos = todos
+    
+    // If has property && completed === 'true'
+    if (queryParams.hasOwnProperty('completed')) {
+        filteredTodos = _.where(filteredTodos, {completed: queryParams.completed.trim() === 'true' } )
+    }
+    
+    // Search
+    if (queryParams.hasOwnProperty('q') && queryParams.q.trim().length > 0) {
+        const q = queryParams.q.trim()
+        filteredTodos = _.filter(filteredTodos, (todo) => {
+            return (todo.description.indexOf(q) >= 0)
+        })
+    }
+    
+    
+    res.status(200).json({data: filteredTodos})
 })
 
 app.get('/todos/:id', (req, res) => {
