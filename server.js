@@ -118,7 +118,7 @@ app.post('/users', (req, res) => {
         if (!user) {
             return res.status(404)
         }
-        return res.json(user.toJSON())
+        return res.json(user.toPublicJSON())
     }).catch((err) => {
         res.status(500).json(err)
     }) 
