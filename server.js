@@ -40,11 +40,14 @@ app.get('/todos', (req, res) => {
 app.get('/todos/:id', (req, res) => {
     const id = parseInt(req.params.id, 10)
 
-    var todo = _.findWhere(todos, {id})
-    if (todo) {
-        res.status(200).json({data: todo})
-    }
-    res.status(404).json({data: {error : 'Todo not found'}})
+    db.todo.findById(id).then((todo) => {
+        if (!!todo) {
+            return res.status(200).json({data: todo})
+        }
+        res.status(404).send()
+    }).catch((err) => {
+        res.status(404).json({data: {error : 'An error occured'}})
+    })
 })
 
 app.post('/todos', (req, res) => {
@@ -52,13 +55,13 @@ app.post('/todos', (req, res) => {
     const body = req.body
     let todo = _.pick(body, 'description', 'completed')
     todo.description = todo.description.trim()
-    
+
     db.todo.create(todo).then((todo) => {
         res.status(200).json(todo.toJSON())
     }).catch((err) => {
         res.status(400).json(err)
     });
-    
+
 })
 
 app.delete('/todos/:id', (req, res) => {
