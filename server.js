@@ -108,6 +108,22 @@ app.put('/todos/:id', (req, res) => {
 
 })
 
+app.post('/users', (req, res) => {
+    let body = req.body
+    let user = _.pick(body, 'email', 'password')
+    user.email = user.email.trim()
+    user.password = user.password.trim()
+    
+    db.user.create(user).then((user) => {
+        if (!user) {
+            return res.status(404)
+        }
+        return res.json(user.toJSON())
+    }).catch((err) => {
+        res.status(500).json(err)
+    }) 
+})
+
 db.sequelize.sync().then(() => {
     app.listen(PORT, () => {
         console.log("Server is listening on port " + PORT)
