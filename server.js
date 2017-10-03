@@ -1,5 +1,6 @@
 const bodyParser = require('body-parser')
 const _ = require('underscore')
+const bcrypt = require('bcrypt')
 const express = require('express')
 const app = express()
 
@@ -113,7 +114,7 @@ app.post('/users', (req, res) => {
     let user = _.pick(body, 'email', 'password')
     user.email = user.email.trim()
     user.password = user.password.trim()
-    
+
     db.user.create(user).then((user) => {
         if (!user) {
             return res.status(404)
@@ -122,6 +123,20 @@ app.post('/users', (req, res) => {
     }).catch((err) => {
         res.status(500).json(err)
     }) 
+})
+
+app.post('/users/login', (req, res) => {
+    let body = req.body
+    let userData = _.pick(body, 'email', 'password')
+    
+    db.user.authenticate(userData).then((user) => {
+        return res.json({authenticated: true, user})
+    }, () => {
+        res.status(401).send()
+    }).catch((err) => {
+        return res.status(500).json(err)
+    })
+
 })
 
 db.sequelize.sync().then(() => {
