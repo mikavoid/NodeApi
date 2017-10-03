@@ -3,6 +3,8 @@ const _ = require('underscore')
 const express = require('express')
 const app = express()
 
+const db = require('./db')
+
 const PORT = process.env.PORT || 3000
 
 let todos = []
@@ -17,12 +19,12 @@ app.get('/', (req, res) => {
 app.get('/todos', (req, res) => {
     const queryParams = req.query
     let filteredTodos = todos
-    
+
     // If has property && completed === 'true'
     if (queryParams.hasOwnProperty('completed')) {
         filteredTodos = _.where(filteredTodos, {completed: queryParams.completed.trim() === 'true' } )
     }
-    
+
     // Search
     if (queryParams.hasOwnProperty('q') && queryParams.q.trim().length > 0) {
         const q = queryParams.q.trim()
@@ -30,8 +32,8 @@ app.get('/todos', (req, res) => {
             return (todo.description.indexOf(q) >= 0)
         })
     }
-    
-    
+
+
     res.status(200).json({data: filteredTodos})
 })
 
@@ -48,32 +50,25 @@ app.get('/todos/:id', (req, res) => {
 app.post('/todos', (req, res) => {
 
     const body = req.body
-    
-    // Validation
-    if (!_.isString(body.description) 
-            || !_.isBoolean(body.completed) 
-            || body.description.trim().length === 0) {
-        res.status(404).send()
-    }
-    
-    body.description = body.description.trim()
-    
     let todo = _.pick(body, 'description', 'completed')
-    todo.id = todoNextId
+    todo.description = todo.description.trim()
     
-    todos.push(todo)
-    todoNextId++
-    res.status(200).send()
+    db.todo.create(todo).then((todo) => {
+        res.status(200).json(todo.toJSON())
+    }).catch((err) => {
+        res.status(400).json(err)
+    });
+    
 })
 
 app.delete('/todos/:id', (req, res) => {
     const id = parseInt(req.params.id, 10)
     const matchedTodo = _.findWhere(todos, {id})
-    
+
     if (!matchedTodo) {
         return res.status(404).json({'error': 'No todo found'})
     }
-    
+
     todos = _.without(todos, matchedTodo)
     res.status(200).send(matchedTodo)
 })
@@ -83,29 +78,31 @@ app.put('/todos/:id', (req, res) => {
     const id = parseInt(req.params.id, 10)
     const validAttributes = {};
     const matchedTodo = _.findWhere(todos, {id})
-    
+
     if (!matchedTodo) {
-         return res.status(404).json({'error': 'No todo found'})
+        return res.status(404).json({'error': 'No todo found'})
     }
-   
+
     if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
         validAttributes.completed = body.completed
     } else if (body.hasOwnProperty('completed')) {
         return res.status(404).send()
     }
-    
+
     if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
         validAttributes.description = body.description
     } else if (body.hasOwnProperty('description')) {
         return res.status(404).send()
     }
-    
+
     _.extend(matchedTodo, validAttributes)
     return res.status(200).json(matchedTodo)
-    
+
 })
 
-
-app.listen(PORT, () => {
-    console.log("Server is listening on port " + PORT)
+db.sequelize.sync().then(() => {
+    app.listen(PORT, () => {
+        console.log("Server is listening on port " + PORT)
+    })
 })
+
