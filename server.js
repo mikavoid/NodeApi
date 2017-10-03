@@ -18,23 +18,25 @@ app.get('/', (req, res) => {
 
 app.get('/todos', (req, res) => {
     const queryParams = req.query
-    let filteredTodos = todos
+    let where = {}
 
-    // If has property && completed === 'true'
     if (queryParams.hasOwnProperty('completed')) {
-        filteredTodos = _.where(filteredTodos, {completed: queryParams.completed.trim() === 'true' } )
+        where.completed = (queryParams.completed === 'true')
     }
 
-    // Search
     if (queryParams.hasOwnProperty('q') && queryParams.q.trim().length > 0) {
         const q = queryParams.q.trim()
-        filteredTodos = _.filter(filteredTodos, (todo) => {
-            return (todo.description.indexOf(q) >= 0)
-        })
+        where.description = { $like: `%${q}%`}
     }
 
-
-    res.status(200).json({data: filteredTodos})
+    db.todo.findAll({where}).then((todos) => {
+        if (!todos) {
+            return res.status(404).send()
+        }
+        return res.json({data: todos})
+    }).catch((err) => {
+        return res.status(500).json(err)
+    })
 })
 
 app.get('/todos/:id', (req, res) => {
