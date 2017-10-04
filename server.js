@@ -5,6 +5,7 @@ const express = require('express')
 const app = express()
 
 const db = require('./db')
+const middleware = require('./middleware')(db)
 
 const PORT = process.env.PORT || 3000
 
@@ -17,7 +18,7 @@ app.get('/', (req, res) => {
     res.status(200).json({data: 'Todo API root'})
 })
 
-app.get('/todos', (req, res) => {
+app.get('/todos', middleware.requireAuthentication, (req, res) => {
     const queryParams = req.query
     let where = {}
 
@@ -40,7 +41,7 @@ app.get('/todos', (req, res) => {
     })
 })
 
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', middleware.requireAuthentication, (req, res) => {
     const id = parseInt(req.params.id, 10)
 
     db.todo.findById(id).then((todo) => {
@@ -53,7 +54,7 @@ app.get('/todos/:id', (req, res) => {
     })
 })
 
-app.post('/todos', (req, res) => {
+app.post('/todos', middleware.requireAuthentication, (req, res) => {
 
     const body = req.body
     let todo = _.pick(body, 'description', 'completed')
@@ -67,7 +68,7 @@ app.post('/todos', (req, res) => {
 
 })
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', middleware.requireAuthentication, (req, res) => {
     const id = parseInt(req.params.id, 10)
 
     db.todo.destroy({where: {id}}).then((rowsDeleted) => {
@@ -80,7 +81,7 @@ app.delete('/todos/:id', (req, res) => {
     })
 })
 
-app.put('/todos/:id', (req, res) => {
+app.put('/todos/:id', middleware.requireAuthentication, (req, res) => {
     let body = _.pick(req.body, 'description', 'completed')
     const id = parseInt(req.params.id, 10)
     const attributes = {};
