@@ -126,11 +126,17 @@ app.post('/users', (req, res) => {
 })
 
 app.post('/users/login', (req, res) => {
-    let body = req.body
+    const body = req.body
     let userData = _.pick(body, 'email', 'password')
     
     db.user.authenticate(userData).then((user) => {
-        return res.json({authenticated: true, user})
+        const token = user.generateToken('authentication')
+
+        if (!token) {
+            return res.status(401).send()
+        }
+
+        return res.header('Auth', token).json({authenticated: true, user})
     }, () => {
         res.status(401).send()
     }).catch((err) => {
