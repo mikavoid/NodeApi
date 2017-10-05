@@ -9,9 +9,6 @@ const middleware = require('./middleware')(db)
 
 const PORT = process.env.PORT || 3000
 
-let todos = []
-let todoNextId = 1
-
 app.use(bodyParser.json())
 
 app.get('/', (req, res) => {
@@ -20,7 +17,7 @@ app.get('/', (req, res) => {
 
 app.get('/todos', middleware.requireAuthentication, (req, res) => {
     const queryParams = req.query
-    let where = {userId: req.user.get('id')}
+    const where = {userId: req.user.get('id')}
 
     if (queryParams.hasOwnProperty('completed')) {
         where.completed = (queryParams.completed === 'true')
@@ -87,7 +84,7 @@ app.delete('/todos/:id', middleware.requireAuthentication, (req, res) => {
 })
 
 app.put('/todos/:id', middleware.requireAuthentication, (req, res) => {
-    let body = _.pick(req.body, 'description', 'completed')
+    const body = _.pick(req.body, 'description', 'completed')
     const id = parseInt(req.params.id, 10)
     const attributes = {};
 
@@ -116,8 +113,8 @@ app.put('/todos/:id', middleware.requireAuthentication, (req, res) => {
 })
 
 app.post('/users', (req, res) => {
-    let body = req.body
-    let user = _.pick(body, 'email', 'password')
+    const body = req.body
+    const user = _.pick(body, 'email', 'password')
     user.email = user.email.trim()
     user.password = user.password.trim()
 
@@ -133,7 +130,7 @@ app.post('/users', (req, res) => {
 
 app.post('/users/login', (req, res) => {
     const body = req.body
-    let userData = _.pick(body, 'email', 'password')
+    const userData = _.pick(body, 'email', 'password')
     
     db.user.authenticate(userData).then((user) => {
         const token = user.generateToken('authentication')
