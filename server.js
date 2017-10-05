@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
 
 app.get('/todos', middleware.requireAuthentication, (req, res) => {
     const queryParams = req.query
-    let where = {}
+    let where = {userId: req.user.get('id')}
 
     if (queryParams.hasOwnProperty('completed')) {
         where.completed = (queryParams.completed === 'true')
@@ -45,10 +45,11 @@ app.get('/todos/:id', middleware.requireAuthentication, (req, res) => {
     const id = parseInt(req.params.id, 10)
 
     db.todo.findById(id).then((todo) => {
-        if (!!todo) {
-            return res.status(200).json({data: todo})
+        if (!todo || todo.userId !== req.user.get('id')) {
+            return res.status(404).send()
         }
-        res.status(404).send()
+        return res.status(200).json({data: todo})
+        
     }).catch((err) => {
         res.status(404).json({data: {error : 'An error occured'}})
     })
@@ -75,7 +76,7 @@ app.post('/todos', middleware.requireAuthentication, (req, res) => {
 app.delete('/todos/:id', middleware.requireAuthentication, (req, res) => {
     const id = parseInt(req.params.id, 10)
 
-    db.todo.destroy({where: {id}}).then((rowsDeleted) => {
+    db.todo.destroy({where: {id, userId: req.user.get('id')}}).then((rowsDeleted) => {
         if (rowsDeleted < 1) {
             return res.status(404).json(err)
         }
@@ -100,7 +101,7 @@ app.put('/todos/:id', middleware.requireAuthentication, (req, res) => {
     }
 
     db.todo.findById(id).then((todo) => {
-        if (!todo) {
+        if (!todo || todo.userId !== req.user.get('id')) {
             return res.status(404).send()
         }
         todo.update(attributes).then((todo) => {
