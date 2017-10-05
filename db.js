@@ -19,6 +19,7 @@ let db = {};
 // Fill all models
 db.todo = sequelize.import(path.join(__dirname, 'models', 'todo.js'))
 db.user = sequelize.import(path.join(__dirname, 'models', 'user.js'))
+db.token = sequelize.import(path.join(__dirname, 'models', 'token.js'))
 
 db.todo.belongsTo(db.user)
 db.user.hasMany(db.todo)
